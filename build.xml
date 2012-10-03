@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<project name="regain-deploy-live" default="targets" basedir=".">
+<!-- Deploy regain install from dev to live (Author: Benjamin Pick) -->
+  <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask" classpath="xmltask.jar" />
+
+  <!--
+   | The properties and paths
+   +-->
+  <property file="build.properties"/>
+  <property environment="env"/>
+  
+  <target name="targets">
+	<echo message="ant target" />
+	<echo message="" />
+  	<echo message="available targets:"/>
+  	<echo message="  deploy-live          Deploy dev regain installation to live."/>
+  	<echo message="  deploy-live-crawler  Deploy dev regain installation to live. (Only Crawler and its plugins)"/>
+   	<echo message="  deploy-live-tomcat   Deploy dev regain installation to live. (Only Search and its plugins)"/>
+    <echo message="  all                  Deploy all."/>
+  </target>
+  
+  <target name="deploy-live-crawler">
+    <!-- Check if crawler is currently running -->
+    <condition property="crawler.running">
+       <available file="${crawler_lock_file_live}" />
+    </condition>
+  	<fail message="Cannot deploy: Crawler is currently running. Try again in some seconds." if="crawler.running" />
+  	
+  	  <!-- Acquire lock (avoid starting crawler at the same time) -->
+  	<echo message="Telling the crawler not to run ... : Creating ${crawler_lockupdate_file_live}" />
+  	<touch file="${crawler_lockupdate_file_live}" />
+  
+  	<!-- Copy all files from crawler-dev -->
+     <copy todir="${crawler_folder_live}" overwrite="false" granularity="5256000000">
+   	  	<fileset dir="${crawler_folder_dev}">
+   	  		<exclude name="log/**" />
+   	  		<exclude name="searchindex/**" />
+   	  	</fileset>   	  
+   	 </copy>
+   	
+   	<!-- Create empty dirs if they do not already exist -->
+   	<condition property="crawler-dirs.missing">
+   	  <or>
+    	<not>
+          <available file="${crawler_folder_live}/log" type="dir"/>
+      	</not>
+        <not>
+          <available file="${crawler_folder_live}/searchindex" type="dir"/>
+        </not>
+   	  </or>
+    </condition>
+   	<antcall target="-crawler-create-dirs">
+	</antcall>  
+
+    <!-- Modify config to suit live environment -->
+    <xmltask source="${crawler_folder_live}/CrawlerConfiguration.xml" dest="${crawler_folder_live}/CrawlerConfiguration.xml">
+    	<replace path="configuration/startlist/start[1]/text()" withText="${crawler_files_folder_live}" />
+    	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='database']/param[@name='relativeFilenameBase']/text()" withText="${crawler_files_folder_live}"/>
+    	
+    	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='database']/param[@name='dbConnectionString']/text()" withText="${crawler_db_connection_live}" />
+    </xmltask>
+    
+    
+    <!-- Release lock file -->
+    <echo message="Telling the crawler that he can run again ..." />
+    <delete file="${crawler_lockupdate_file_live}" failonerror="false" />
+  	
+       	
+  </target>
+  
+  <target name="-deploy-live-crawler" unless="crawler.running">
+  </target>
+
+  <target name="-crawler-create-dirs" if="crawler-dirs.missing">
+  	<mkdir dir="${crawler_folder_live}/log" />
+   	<mkdir dir="${crawler_folder_live}/searchindex" />
+  	
+  	<exec executable="sudo">
+  		<arg line="chown tomcat:tomcat log searchindex" />
+  	</exec>
+  </target>
+
+  <target name="deploy-live-tomcat">
+  	
+  	
+  	
+  	
+	<antcall target="-restart-tomcat">
+	</antcall>  
+  </target>
+  
+  <target name="-restart-tomcat">
+    <!--- <echo message="You should now restart tomcat (sudo /root/restart-tomcat.sh) ..." /> -->
+  	<echo message="Restarting Tomcat..." />
+  	<exec executable="sudo" failonerror="true">
+  		<arg line="${restart-tomcat-command}"/>
+  	</exec>
+  </target>
+  
+
+  
+  <target name="deploy-live" depends="deploy-live-crawler, deploy-live-tomcat">
+  </target>
+  
+  <target name="all" depends="deploy-live">
+  </target>
+</project>
