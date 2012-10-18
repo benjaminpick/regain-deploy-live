@@ -95,6 +95,9 @@
     		<not>	
         	  <available file="${crawler_db_thumbs_live}" type="dir"/>
 	      	</not>
+		<not>	
+    	  <available file="${deploy_target_dir}/../conf/${tomcat_app_live}" type="dir"/>
+      	</not>
    	  </or>
 	</condition>
     <antcall target="-tomcat-create-dirs">
@@ -121,6 +124,14 @@
   	<exec executable="sudo">
   		<arg line="chown tomcat:tomcat ${crawler_db_thumbs_live}" />
   	</exec>
+  	
+  	<exec executable="sudo">
+  		<arg line="mkdir ${deploy_target_dir}/../conf/${tomcat_app_live}" />
+  	</exec>
+  	<exec executable="sudo">
+  		<arg line="chown ${user.name}:users ${deploy_target_dir}/../conf/${tomcat_app_live}" />
+  	</exec>
+  	
   </target>
   
   <target name="-restart-tomcat">
