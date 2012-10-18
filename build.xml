@@ -138,7 +138,7 @@
     <!--- <echo message="You should now restart tomcat (sudo /root/restart-tomcat.sh) ..." /> -->
   	<echo message="Restarting Tomcat..." />
   	<exec executable="sudo" failonerror="true">
-  		<arg line="${restart-tomcat-command}"/>
+  		<arg line="${restart_tomcat_command}"/>
   	</exec>
   </target>
   
