@@ -26,12 +26,13 @@
     </condition>
   	<fail message="Cannot deploy: Crawler is currently running. Try again in some seconds." if="crawler.running" />
   	
-  	  <!-- Acquire lock (avoid starting crawler at the same time) -->
+  	<!-- Acquire lock (avoid starting crawler at the same time) -->
   	<echo message="Telling the crawler not to run ... : Creating ${crawler_lockupdate_file_live}" />
+  	<mkdir dir="${crawler_folder_live}" />
   	<touch file="${crawler_lockupdate_file_live}" />
   
   	<!-- Copy all files from crawler-dev -->
-     <copy todir="${crawler_folder_live}" overwrite="false" granularity="5256000000">
+     <copy todir="${crawler_folder_live}" overwrite="false"> <!-- overwrite only newer files -->
    	  	<fileset dir="${crawler_folder_dev}">
    	  		<exclude name="log/**" />
    	  		<exclude name="searchindex/**" />
@@ -41,7 +42,7 @@
    	<!-- Create empty dirs if they do not already exist -->
    	<condition property="crawler-dirs.missing">
    	  <or>
-    	<not>
+    	<not>	
           <available file="${crawler_folder_live}/log" type="dir"/>
       	</not>
         <not>
@@ -58,6 +59,8 @@
     	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='database']/param[@name='relativeFilenameBase']/text()" withText="${crawler_files_folder_live}"/>
     	
     	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='database']/param[@name='dbConnectionString']/text()" withText="${crawler_db_connection_live}" />
+    	
+    	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='thumbnailing']/param[@name='thumbnailFolder']/text()" withText="${crawler_db_thumbs_live}" />
     </xmltask>
     
     
@@ -76,17 +79,50 @@
    	<mkdir dir="${crawler_folder_live}/searchindex" />
   	
   	<exec executable="sudo">
-  		<arg line="chown tomcat:tomcat log searchindex" />
+  		<arg line="chown tomcat:tomcat ${crawler_folder_live}/log ${crawler_folder_live}/searchindex" />
   	</exec>
   </target>
 
   <target name="deploy-live-tomcat">
   	
+  	<echo message="Copy tomcat app..." />
+  	<copy todir="${deploy_target_dir}/${tomcat_app_live}" overwrite="false"> <!-- overwrite only newer files -->
+   	  	<fileset dir="${deploy_target_dir}/${tomcat_app_dev}">
+   	  		<exclude name="thumbs/**" />
+   	  	</fileset>   	  
+  	</copy>
   	
+  	<condition property="tomcat-dirs.missing">
+   	  <or>
+    		<not>	
+        	  <available file="${crawler_db_thumbs_live}" type="dir"/>
+	      	</not>
+   	  </or>
+	</condition>
+       	<antcall target="-tomcat-create-dirs">
+	</antcall>  
+
   	
+  	<copy todir="${deploy_target_dir}/../conf/${tomcat_app_live}" overwrite="false"> <!-- overwrite only newer files -->
+   	  	<fileset dir="${deploy_target_dir}/../conf/${tomcat_app_dev}">
+   	  	</fileset>   	  
+   	</copy>
+  	
+  	<!-- Modify config to suit live environment -->
+    <xmltask source="${deploy_target_dir}/../conf/${tomcat_app_dev}/SearchConfiguration.xml" dest="${deploy_target_dir}/../conf/${tomcat_app_dev}/SearchConfiguration.xml">
+    	<replace path="configuration/index/dir[1]/text()" withText="${crawler_folder_live}/searchindex" />
+    </xmltask>  	
   	
 	<antcall target="-restart-tomcat">
 	</antcall>  
+  </target>
+  
+  <target name="-tomcat-create-dirs" if="tomcat-dirs.missing">
+  	<mkdir dir="${crawler_db_thumbs_live}" />
+  	
+  	<exec executable="sudo">
+  		<arg line="chown tomcat:tomcat ${crawler_db_thumbs_live}" />
+  	</exec>
   </target>
   
   <target name="-restart-tomcat">
