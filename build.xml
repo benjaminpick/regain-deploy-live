@@ -24,7 +24,7 @@
     <condition property="crawler.running">
        <available file="${crawler_lock_file_live}" />
     </condition>
-  	<fail message="Cannot deploy: Crawler is currently running. Try again in some seconds." if="crawler.running" />
+  	<fail message="Cannot deploy: Crawler is currently running. Try again in some seconds. (Delete ${crawler_lock_file_live} if you are sure it's not running.)" if="crawler.running" />
   	
   	<!-- Acquire lock (avoid starting crawler at the same time) -->
   	<echo message="Telling the crawler not to run ... : Creating ${crawler_lockupdate_file_live}" />
@@ -38,6 +38,9 @@
    	  		<exclude name="searchindex/**" />
    	  	</fileset>   	  
    	 </copy>
+  	<exec executable="chmod">
+  		<arg line="a+x ${crawler_folder_live}/start-crawler.sh" />
+  	</exec>
    	
    	<!-- Create empty dirs if they do not already exist -->
    	<condition property="crawler-dirs.missing">
