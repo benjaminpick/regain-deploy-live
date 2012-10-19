@@ -117,8 +117,12 @@
   	
   	<!-- Modify config to suit live environment -->
     <xmltask source="${deploy_target_dir}/../conf/${tomcat_app_dev}/SearchConfiguration.xml" dest="${deploy_target_dir}/../conf/${tomcat_app_dev}/SearchConfiguration.xml">
-    	<replace path="configuration/index/dir[1]/text()" withText="${crawler_folder_live}/searchindex" />
-    </xmltask>  	
+    	<replace path="configuration/indexList/index[1]/dir[1]/text()" withText="${crawler_folder_live}/searchindex" />
+    </xmltask>
+    <!-- Modify config to suit live environment -->
+    <xmltask source="${deploy_target_dir}/${tomcat_app_live}/WEB-INF/web.xml" dest="${deploy_target_dir}/${tomcat_app_live}/WEB-INF/web.xml" public="//Sun Microsystems, Inc.//DTD Web Application 2.2//EN" system="http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
+    	<replace path="web-app/context-param[1]/param-value/text()" withText="../conf/${tomcat_app_live}/SearchConfiguration.xml" />
+    </xmltask>
   	
 	<antcall target="-restart-tomcat">
 	</antcall>  
