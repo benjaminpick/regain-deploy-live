@@ -57,6 +57,7 @@
 	</antcall>  
 
     <!-- Modify config to suit live environment -->
+  	<echo message="Modifying CrawlerConfiguration.xml..." />
     <xmltask source="${crawler_folder_live}/CrawlerConfiguration.xml" dest="${crawler_folder_live}/CrawlerConfiguration.xml">
     	<!-- which files to index? -->
     	<replace path="configuration/startlist/start[1]/text()" withText="file://${crawler_files_folder_live}" />
@@ -120,16 +121,20 @@
    	</copy>
   	
   	<!-- Modify config to suit live environment -->
+  	<echo message="Modifying SearchConfiguration.xml..." />
     <xmltask source="${deploy_target_dir}/../conf/${tomcat_app_live}/SearchConfiguration.xml" dest="${deploy_target_dir}/../conf/${tomcat_app_live}/SearchConfiguration.xml">
     	<!-- Location of crawled searchindex -->
     	<replace path="configuration/indexList/index[1]/dir[1]/text()" withText="${crawler_folder_live}/searchindex" />
     </xmltask>
-    <!-- Modify config to suit live environment -->
+
+  	<!-- Modify config to suit live environment -->
+  	<echo message="Modifying web.xml..." />
     <xmltask source="${deploy_target_dir}/${tomcat_app_live}/WEB-INF/web.xml" dest="${deploy_target_dir}/${tomcat_app_live}/WEB-INF/web.xml" public="//Sun Microsystems, Inc.//DTD Web Application 2.2//EN" system="http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
     	<!-- Location of tomcat search config -->
     	<replace path="web-app/context-param[1]/param-value/text()" withText="../conf/${tomcat_app_live}/SearchConfiguration.xml" />
     </xmltask>
   	
+  	<!-- Done. Now restart in order to apply changes. -->
 	<antcall target="-restart-tomcat">
 	</antcall>  
   </target>
@@ -151,7 +156,6 @@
   </target>
   
   <target name="-restart-tomcat">
-    <!--- <echo message="You should now restart tomcat (sudo /root/restart-tomcat.sh) ..." /> -->
   	<echo message="Restarting Tomcat..." />
   	<exec executable="sudo" failonerror="true">
   		<arg line="${restart_tomcat_command}"/>

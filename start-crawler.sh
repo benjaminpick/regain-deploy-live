@@ -1,6 +1,8 @@
 #/bin/bash
 
-. build.properties
+# Usage: ./start-crawler.sh . 
+
+. $1/build.properties
 export LOCKFILE=${LOCKFILE:="/var/run/regain-crawler-live.run"}
 export FOLDER="$crawler_folder_live"
 
