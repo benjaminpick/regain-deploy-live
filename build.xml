@@ -66,7 +66,7 @@
     	
     	<!-- Connection string for database table file -->
     	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='database']/param[@name='dbConnectionString']/text()" withText="${crawler_db_connection_live}" />
-    	<replace path="configuration/crawlerAccessController/config/section[@name='database']/param[@name='dbConnectionString']/text()" withText="${crawler_db_connection_live}" />
+    	<replace path="configuration/crawlerAccessController/config/param[@name='dbConnectionString']/text()" withText="${crawler_db_connection_live}" />
     	
     	<!-- Folder where the thumbnails are stored -->
     	<replace path="configuration/crawlerPluginList/crawlerPlugin/config/section[@name='thumbnailing']/param[@name='thumbnailFolder']/text()" withText="${crawler_db_thumbs_live}" />
